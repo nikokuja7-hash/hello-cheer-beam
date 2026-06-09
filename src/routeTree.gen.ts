@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedOnboardingProfileRouteImport } from './routes/_authenticated/onboarding.profile'
 import { Route as AuthenticatedOnboardingNotificationsRouteImport } from './routes/_authenticated/onboarding.notifications'
 
 const AuthRoute = AuthRouteImport.update({
@@ -28,6 +29,12 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedOnboardingProfileRoute =
+  AuthenticatedOnboardingProfileRouteImport.update({
+    id: '/onboarding/profile',
+    path: '/onboarding/profile',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedOnboardingNotificationsRoute =
   AuthenticatedOnboardingNotificationsRouteImport.update({
     id: '/onboarding/notifications',
@@ -39,11 +46,13 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/onboarding/notifications': typeof AuthenticatedOnboardingNotificationsRoute
+  '/onboarding/profile': typeof AuthenticatedOnboardingProfileRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/onboarding/notifications': typeof AuthenticatedOnboardingNotificationsRoute
+  '/onboarding/profile': typeof AuthenticatedOnboardingProfileRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -51,18 +60,20 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/onboarding/notifications': typeof AuthenticatedOnboardingNotificationsRoute
+  '/_authenticated/onboarding/profile': typeof AuthenticatedOnboardingProfileRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/onboarding/notifications'
+  fullPaths: '/' | '/auth' | '/onboarding/notifications' | '/onboarding/profile'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/onboarding/notifications'
+  to: '/' | '/auth' | '/onboarding/notifications' | '/onboarding/profile'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/onboarding/notifications'
+    | '/_authenticated/onboarding/profile'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -94,6 +105,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/onboarding/profile': {
+      id: '/_authenticated/onboarding/profile'
+      path: '/onboarding/profile'
+      fullPath: '/onboarding/profile'
+      preLoaderRoute: typeof AuthenticatedOnboardingProfileRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/onboarding/notifications': {
       id: '/_authenticated/onboarding/notifications'
       path: '/onboarding/notifications'
@@ -106,11 +124,13 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedOnboardingNotificationsRoute: typeof AuthenticatedOnboardingNotificationsRoute
+  AuthenticatedOnboardingProfileRoute: typeof AuthenticatedOnboardingProfileRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedOnboardingNotificationsRoute:
     AuthenticatedOnboardingNotificationsRoute,
+  AuthenticatedOnboardingProfileRoute: AuthenticatedOnboardingProfileRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
