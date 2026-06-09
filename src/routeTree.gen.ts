@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
 import { Route as AuthenticatedOnboardingProfileRouteImport } from './routes/_authenticated/onboarding.profile'
 import { Route as AuthenticatedOnboardingNotificationsRouteImport } from './routes/_authenticated/onboarding.notifications'
 import { Route as AuthenticatedOnboardingEfootballRouteImport } from './routes/_authenticated/onboarding.efootball'
@@ -29,6 +30,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedHomeRoute = AuthenticatedHomeRouteImport.update({
+  id: '/home',
+  path: '/home',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedOnboardingProfileRoute =
   AuthenticatedOnboardingProfileRouteImport.update({
@@ -52,6 +58,7 @@ const AuthenticatedOnboardingEfootballRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/home': typeof AuthenticatedHomeRoute
   '/onboarding/efootball': typeof AuthenticatedOnboardingEfootballRoute
   '/onboarding/notifications': typeof AuthenticatedOnboardingNotificationsRoute
   '/onboarding/profile': typeof AuthenticatedOnboardingProfileRoute
@@ -59,6 +66,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/home': typeof AuthenticatedHomeRoute
   '/onboarding/efootball': typeof AuthenticatedOnboardingEfootballRoute
   '/onboarding/notifications': typeof AuthenticatedOnboardingNotificationsRoute
   '/onboarding/profile': typeof AuthenticatedOnboardingProfileRoute
@@ -68,6 +76,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/home': typeof AuthenticatedHomeRoute
   '/_authenticated/onboarding/efootball': typeof AuthenticatedOnboardingEfootballRoute
   '/_authenticated/onboarding/notifications': typeof AuthenticatedOnboardingNotificationsRoute
   '/_authenticated/onboarding/profile': typeof AuthenticatedOnboardingProfileRoute
@@ -77,6 +86,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/home'
     | '/onboarding/efootball'
     | '/onboarding/notifications'
     | '/onboarding/profile'
@@ -84,6 +94,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/home'
     | '/onboarding/efootball'
     | '/onboarding/notifications'
     | '/onboarding/profile'
@@ -92,6 +103,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/home'
     | '/_authenticated/onboarding/efootball'
     | '/_authenticated/onboarding/notifications'
     | '/_authenticated/onboarding/profile'
@@ -126,6 +138,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/home': {
+      id: '/_authenticated/home'
+      path: '/home'
+      fullPath: '/home'
+      preLoaderRoute: typeof AuthenticatedHomeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/onboarding/profile': {
       id: '/_authenticated/onboarding/profile'
       path: '/onboarding/profile'
@@ -151,12 +170,14 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
   AuthenticatedOnboardingEfootballRoute: typeof AuthenticatedOnboardingEfootballRoute
   AuthenticatedOnboardingNotificationsRoute: typeof AuthenticatedOnboardingNotificationsRoute
   AuthenticatedOnboardingProfileRoute: typeof AuthenticatedOnboardingProfileRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedHomeRoute: AuthenticatedHomeRoute,
   AuthenticatedOnboardingEfootballRoute: AuthenticatedOnboardingEfootballRoute,
   AuthenticatedOnboardingNotificationsRoute:
     AuthenticatedOnboardingNotificationsRoute,
