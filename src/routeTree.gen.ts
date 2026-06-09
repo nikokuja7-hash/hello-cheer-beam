@@ -16,6 +16,7 @@ import { Route as AuthenticatedQuickcashRouteImport } from './routes/_authentica
 import { Route as AuthenticatedLeagueRouteImport } from './routes/_authenticated/league'
 import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
 import { Route as AuthenticatedTournamentsIndexRouteImport } from './routes/_authenticated/tournaments.index'
+import { Route as AuthenticatedTournamentsNewRouteImport } from './routes/_authenticated/tournaments.new'
 import { Route as AuthenticatedOnboardingProfileRouteImport } from './routes/_authenticated/onboarding.profile'
 import { Route as AuthenticatedOnboardingNotificationsRouteImport } from './routes/_authenticated/onboarding.notifications'
 import { Route as AuthenticatedOnboardingEfootballRouteImport } from './routes/_authenticated/onboarding.efootball'
@@ -55,6 +56,12 @@ const AuthenticatedTournamentsIndexRoute =
     path: '/tournaments/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedTournamentsNewRoute =
+  AuthenticatedTournamentsNewRouteImport.update({
+    id: '/tournaments/new',
+    path: '/tournaments/new',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedOnboardingProfileRoute =
   AuthenticatedOnboardingProfileRouteImport.update({
     id: '/onboarding/profile',
@@ -83,6 +90,7 @@ export interface FileRoutesByFullPath {
   '/onboarding/efootball': typeof AuthenticatedOnboardingEfootballRoute
   '/onboarding/notifications': typeof AuthenticatedOnboardingNotificationsRoute
   '/onboarding/profile': typeof AuthenticatedOnboardingProfileRoute
+  '/tournaments/new': typeof AuthenticatedTournamentsNewRoute
   '/tournaments/': typeof AuthenticatedTournamentsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -94,6 +102,7 @@ export interface FileRoutesByTo {
   '/onboarding/efootball': typeof AuthenticatedOnboardingEfootballRoute
   '/onboarding/notifications': typeof AuthenticatedOnboardingNotificationsRoute
   '/onboarding/profile': typeof AuthenticatedOnboardingProfileRoute
+  '/tournaments/new': typeof AuthenticatedTournamentsNewRoute
   '/tournaments': typeof AuthenticatedTournamentsIndexRoute
 }
 export interface FileRoutesById {
@@ -107,6 +116,7 @@ export interface FileRoutesById {
   '/_authenticated/onboarding/efootball': typeof AuthenticatedOnboardingEfootballRoute
   '/_authenticated/onboarding/notifications': typeof AuthenticatedOnboardingNotificationsRoute
   '/_authenticated/onboarding/profile': typeof AuthenticatedOnboardingProfileRoute
+  '/_authenticated/tournaments/new': typeof AuthenticatedTournamentsNewRoute
   '/_authenticated/tournaments/': typeof AuthenticatedTournamentsIndexRoute
 }
 export interface FileRouteTypes {
@@ -120,6 +130,7 @@ export interface FileRouteTypes {
     | '/onboarding/efootball'
     | '/onboarding/notifications'
     | '/onboarding/profile'
+    | '/tournaments/new'
     | '/tournaments/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -131,6 +142,7 @@ export interface FileRouteTypes {
     | '/onboarding/efootball'
     | '/onboarding/notifications'
     | '/onboarding/profile'
+    | '/tournaments/new'
     | '/tournaments'
   id:
     | '__root__'
@@ -143,6 +155,7 @@ export interface FileRouteTypes {
     | '/_authenticated/onboarding/efootball'
     | '/_authenticated/onboarding/notifications'
     | '/_authenticated/onboarding/profile'
+    | '/_authenticated/tournaments/new'
     | '/_authenticated/tournaments/'
   fileRoutesById: FileRoutesById
 }
@@ -203,6 +216,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTournamentsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/tournaments/new': {
+      id: '/_authenticated/tournaments/new'
+      path: '/tournaments/new'
+      fullPath: '/tournaments/new'
+      preLoaderRoute: typeof AuthenticatedTournamentsNewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/onboarding/profile': {
       id: '/_authenticated/onboarding/profile'
       path: '/onboarding/profile'
@@ -234,6 +254,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedOnboardingEfootballRoute: typeof AuthenticatedOnboardingEfootballRoute
   AuthenticatedOnboardingNotificationsRoute: typeof AuthenticatedOnboardingNotificationsRoute
   AuthenticatedOnboardingProfileRoute: typeof AuthenticatedOnboardingProfileRoute
+  AuthenticatedTournamentsNewRoute: typeof AuthenticatedTournamentsNewRoute
   AuthenticatedTournamentsIndexRoute: typeof AuthenticatedTournamentsIndexRoute
 }
 
@@ -245,6 +266,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedOnboardingNotificationsRoute:
     AuthenticatedOnboardingNotificationsRoute,
   AuthenticatedOnboardingProfileRoute: AuthenticatedOnboardingProfileRoute,
+  AuthenticatedTournamentsNewRoute: AuthenticatedTournamentsNewRoute,
   AuthenticatedTournamentsIndexRoute: AuthenticatedTournamentsIndexRoute,
 }
 
