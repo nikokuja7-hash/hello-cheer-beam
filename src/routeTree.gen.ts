@@ -9,38 +9,203 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedQuickcashRouteImport } from './routes/_authenticated/quickcash'
+import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
+import { Route as AuthenticatedLeagueRouteImport } from './routes/_authenticated/league'
+import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
+import { Route as AuthenticatedTournamentsIndexRouteImport } from './routes/_authenticated/tournaments.index'
+import { Route as AuthenticatedTournamentsNewRouteImport } from './routes/_authenticated/tournaments.new'
+import { Route as AuthenticatedTournamentsIdRouteImport } from './routes/_authenticated/tournaments.$id'
+import { Route as AuthenticatedOnboardingProfileRouteImport } from './routes/_authenticated/onboarding.profile'
+import { Route as AuthenticatedOnboardingNotificationsRouteImport } from './routes/_authenticated/onboarding.notifications'
+import { Route as AuthenticatedOnboardingEfootballRouteImport } from './routes/_authenticated/onboarding.efootball'
 
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedQuickcashRoute = AuthenticatedQuickcashRouteImport.update({
+  id: '/quickcash',
+  path: '/quickcash',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedLeagueRoute = AuthenticatedLeagueRouteImport.update({
+  id: '/league',
+  path: '/league',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedHomeRoute = AuthenticatedHomeRouteImport.update({
+  id: '/home',
+  path: '/home',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedTournamentsIndexRoute =
+  AuthenticatedTournamentsIndexRouteImport.update({
+    id: '/tournaments/',
+    path: '/tournaments/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedTournamentsNewRoute =
+  AuthenticatedTournamentsNewRouteImport.update({
+    id: '/tournaments/new',
+    path: '/tournaments/new',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedTournamentsIdRoute =
+  AuthenticatedTournamentsIdRouteImport.update({
+    id: '/tournaments/$id',
+    path: '/tournaments/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedOnboardingProfileRoute =
+  AuthenticatedOnboardingProfileRouteImport.update({
+    id: '/onboarding/profile',
+    path: '/onboarding/profile',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedOnboardingNotificationsRoute =
+  AuthenticatedOnboardingNotificationsRouteImport.update({
+    id: '/onboarding/notifications',
+    path: '/onboarding/notifications',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedOnboardingEfootballRoute =
+  AuthenticatedOnboardingEfootballRouteImport.update({
+    id: '/onboarding/efootball',
+    path: '/onboarding/efootball',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/home': typeof AuthenticatedHomeRoute
+  '/league': typeof AuthenticatedLeagueRoute
+  '/profile': typeof AuthenticatedProfileRoute
+  '/quickcash': typeof AuthenticatedQuickcashRoute
+  '/onboarding/efootball': typeof AuthenticatedOnboardingEfootballRoute
+  '/onboarding/notifications': typeof AuthenticatedOnboardingNotificationsRoute
+  '/onboarding/profile': typeof AuthenticatedOnboardingProfileRoute
+  '/tournaments/$id': typeof AuthenticatedTournamentsIdRoute
+  '/tournaments/new': typeof AuthenticatedTournamentsNewRoute
+  '/tournaments/': typeof AuthenticatedTournamentsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/home': typeof AuthenticatedHomeRoute
+  '/league': typeof AuthenticatedLeagueRoute
+  '/profile': typeof AuthenticatedProfileRoute
+  '/quickcash': typeof AuthenticatedQuickcashRoute
+  '/onboarding/efootball': typeof AuthenticatedOnboardingEfootballRoute
+  '/onboarding/notifications': typeof AuthenticatedOnboardingNotificationsRoute
+  '/onboarding/profile': typeof AuthenticatedOnboardingProfileRoute
+  '/tournaments/$id': typeof AuthenticatedTournamentsIdRoute
+  '/tournaments/new': typeof AuthenticatedTournamentsNewRoute
+  '/tournaments': typeof AuthenticatedTournamentsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/_authenticated/home': typeof AuthenticatedHomeRoute
+  '/_authenticated/league': typeof AuthenticatedLeagueRoute
+  '/_authenticated/profile': typeof AuthenticatedProfileRoute
+  '/_authenticated/quickcash': typeof AuthenticatedQuickcashRoute
+  '/_authenticated/onboarding/efootball': typeof AuthenticatedOnboardingEfootballRoute
+  '/_authenticated/onboarding/notifications': typeof AuthenticatedOnboardingNotificationsRoute
+  '/_authenticated/onboarding/profile': typeof AuthenticatedOnboardingProfileRoute
+  '/_authenticated/tournaments/$id': typeof AuthenticatedTournamentsIdRoute
+  '/_authenticated/tournaments/new': typeof AuthenticatedTournamentsNewRoute
+  '/_authenticated/tournaments/': typeof AuthenticatedTournamentsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/home'
+    | '/league'
+    | '/profile'
+    | '/quickcash'
+    | '/onboarding/efootball'
+    | '/onboarding/notifications'
+    | '/onboarding/profile'
+    | '/tournaments/$id'
+    | '/tournaments/new'
+    | '/tournaments/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth'
+    | '/home'
+    | '/league'
+    | '/profile'
+    | '/quickcash'
+    | '/onboarding/efootball'
+    | '/onboarding/notifications'
+    | '/onboarding/profile'
+    | '/tournaments/$id'
+    | '/tournaments/new'
+    | '/tournaments'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/_authenticated/home'
+    | '/_authenticated/league'
+    | '/_authenticated/profile'
+    | '/_authenticated/quickcash'
+    | '/_authenticated/onboarding/efootball'
+    | '/_authenticated/onboarding/notifications'
+    | '/_authenticated/onboarding/profile'
+    | '/_authenticated/tournaments/$id'
+    | '/_authenticated/tournaments/new'
+    | '/_authenticated/tournaments/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,22 +213,114 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/quickcash': {
+      id: '/_authenticated/quickcash'
+      path: '/quickcash'
+      fullPath: '/quickcash'
+      preLoaderRoute: typeof AuthenticatedQuickcashRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/profile': {
+      id: '/_authenticated/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AuthenticatedProfileRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/league': {
+      id: '/_authenticated/league'
+      path: '/league'
+      fullPath: '/league'
+      preLoaderRoute: typeof AuthenticatedLeagueRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/home': {
+      id: '/_authenticated/home'
+      path: '/home'
+      fullPath: '/home'
+      preLoaderRoute: typeof AuthenticatedHomeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/tournaments/': {
+      id: '/_authenticated/tournaments/'
+      path: '/tournaments'
+      fullPath: '/tournaments/'
+      preLoaderRoute: typeof AuthenticatedTournamentsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/tournaments/new': {
+      id: '/_authenticated/tournaments/new'
+      path: '/tournaments/new'
+      fullPath: '/tournaments/new'
+      preLoaderRoute: typeof AuthenticatedTournamentsNewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/tournaments/$id': {
+      id: '/_authenticated/tournaments/$id'
+      path: '/tournaments/$id'
+      fullPath: '/tournaments/$id'
+      preLoaderRoute: typeof AuthenticatedTournamentsIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/onboarding/profile': {
+      id: '/_authenticated/onboarding/profile'
+      path: '/onboarding/profile'
+      fullPath: '/onboarding/profile'
+      preLoaderRoute: typeof AuthenticatedOnboardingProfileRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/onboarding/notifications': {
+      id: '/_authenticated/onboarding/notifications'
+      path: '/onboarding/notifications'
+      fullPath: '/onboarding/notifications'
+      preLoaderRoute: typeof AuthenticatedOnboardingNotificationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/onboarding/efootball': {
+      id: '/_authenticated/onboarding/efootball'
+      path: '/onboarding/efootball'
+      fullPath: '/onboarding/efootball'
+      preLoaderRoute: typeof AuthenticatedOnboardingEfootballRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
+  AuthenticatedLeagueRoute: typeof AuthenticatedLeagueRoute
+  AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
+  AuthenticatedQuickcashRoute: typeof AuthenticatedQuickcashRoute
+  AuthenticatedOnboardingEfootballRoute: typeof AuthenticatedOnboardingEfootballRoute
+  AuthenticatedOnboardingNotificationsRoute: typeof AuthenticatedOnboardingNotificationsRoute
+  AuthenticatedOnboardingProfileRoute: typeof AuthenticatedOnboardingProfileRoute
+  AuthenticatedTournamentsIdRoute: typeof AuthenticatedTournamentsIdRoute
+  AuthenticatedTournamentsNewRoute: typeof AuthenticatedTournamentsNewRoute
+  AuthenticatedTournamentsIndexRoute: typeof AuthenticatedTournamentsIndexRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedHomeRoute: AuthenticatedHomeRoute,
+  AuthenticatedLeagueRoute: AuthenticatedLeagueRoute,
+  AuthenticatedProfileRoute: AuthenticatedProfileRoute,
+  AuthenticatedQuickcashRoute: AuthenticatedQuickcashRoute,
+  AuthenticatedOnboardingEfootballRoute: AuthenticatedOnboardingEfootballRoute,
+  AuthenticatedOnboardingNotificationsRoute:
+    AuthenticatedOnboardingNotificationsRoute,
+  AuthenticatedOnboardingProfileRoute: AuthenticatedOnboardingProfileRoute,
+  AuthenticatedTournamentsIdRoute: AuthenticatedTournamentsIdRoute,
+  AuthenticatedTournamentsNewRoute: AuthenticatedTournamentsNewRoute,
+  AuthenticatedTournamentsIndexRoute: AuthenticatedTournamentsIndexRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
