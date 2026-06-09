@@ -13,6 +13,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedQuickcashRouteImport } from './routes/_authenticated/quickcash'
+import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedLeagueRouteImport } from './routes/_authenticated/league'
 import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
 import { Route as AuthenticatedTournamentsIndexRouteImport } from './routes/_authenticated/tournaments.index'
@@ -39,6 +40,11 @@ const IndexRoute = IndexRouteImport.update({
 const AuthenticatedQuickcashRoute = AuthenticatedQuickcashRouteImport.update({
   id: '/quickcash',
   path: '/quickcash',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedLeagueRoute = AuthenticatedLeagueRouteImport.update({
@@ -93,6 +99,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/home': typeof AuthenticatedHomeRoute
   '/league': typeof AuthenticatedLeagueRoute
+  '/profile': typeof AuthenticatedProfileRoute
   '/quickcash': typeof AuthenticatedQuickcashRoute
   '/onboarding/efootball': typeof AuthenticatedOnboardingEfootballRoute
   '/onboarding/notifications': typeof AuthenticatedOnboardingNotificationsRoute
@@ -106,6 +113,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/home': typeof AuthenticatedHomeRoute
   '/league': typeof AuthenticatedLeagueRoute
+  '/profile': typeof AuthenticatedProfileRoute
   '/quickcash': typeof AuthenticatedQuickcashRoute
   '/onboarding/efootball': typeof AuthenticatedOnboardingEfootballRoute
   '/onboarding/notifications': typeof AuthenticatedOnboardingNotificationsRoute
@@ -121,6 +129,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/home': typeof AuthenticatedHomeRoute
   '/_authenticated/league': typeof AuthenticatedLeagueRoute
+  '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/quickcash': typeof AuthenticatedQuickcashRoute
   '/_authenticated/onboarding/efootball': typeof AuthenticatedOnboardingEfootballRoute
   '/_authenticated/onboarding/notifications': typeof AuthenticatedOnboardingNotificationsRoute
@@ -136,6 +145,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/home'
     | '/league'
+    | '/profile'
     | '/quickcash'
     | '/onboarding/efootball'
     | '/onboarding/notifications'
@@ -149,6 +159,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/home'
     | '/league'
+    | '/profile'
     | '/quickcash'
     | '/onboarding/efootball'
     | '/onboarding/notifications'
@@ -163,6 +174,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/home'
     | '/_authenticated/league'
+    | '/_authenticated/profile'
     | '/_authenticated/quickcash'
     | '/_authenticated/onboarding/efootball'
     | '/_authenticated/onboarding/notifications'
@@ -206,6 +218,13 @@ declare module '@tanstack/react-router' {
       path: '/quickcash'
       fullPath: '/quickcash'
       preLoaderRoute: typeof AuthenticatedQuickcashRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/profile': {
+      id: '/_authenticated/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AuthenticatedProfileRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/league': {
@@ -270,6 +289,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
   AuthenticatedLeagueRoute: typeof AuthenticatedLeagueRoute
+  AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedQuickcashRoute: typeof AuthenticatedQuickcashRoute
   AuthenticatedOnboardingEfootballRoute: typeof AuthenticatedOnboardingEfootballRoute
   AuthenticatedOnboardingNotificationsRoute: typeof AuthenticatedOnboardingNotificationsRoute
@@ -282,6 +302,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedHomeRoute: AuthenticatedHomeRoute,
   AuthenticatedLeagueRoute: AuthenticatedLeagueRoute,
+  AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedQuickcashRoute: AuthenticatedQuickcashRoute,
   AuthenticatedOnboardingEfootballRoute: AuthenticatedOnboardingEfootballRoute,
   AuthenticatedOnboardingNotificationsRoute:
