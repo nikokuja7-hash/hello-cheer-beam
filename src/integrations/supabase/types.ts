@@ -473,6 +473,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_match_room_info: { Args: { _match_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
