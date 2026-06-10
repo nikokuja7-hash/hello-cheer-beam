@@ -1,1 +1,13 @@
 project_id = "kkyidhmsfcezpktdxdeb"
+
+[functions.smartpay-stk]
+verify_jwt = true
+
+[functions.smartpay-webhook]
+verify_jwt = false
+
+[functions.verify-efootball-screenshot]
+verify_jwt = true
+
+[functions.verify-match-result]
+verify_jwt = true
