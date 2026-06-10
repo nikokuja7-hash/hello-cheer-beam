@@ -63,7 +63,7 @@ function AdminDashboard() {
   async function markPaid(id: string) {
     const { data: u } = await supabase.auth.getUser();
     const { error } = await supabase.from("payouts")
-      .update({ status: "paid", marked_paid_at: new Date().toISOString(), marked_paid_by: u.user?.id })
+      .update({ status: "sent", marked_paid_at: new Date().toISOString(), marked_paid_by: u.user?.id })
       .eq("id", id);
     if (error) { toast.error(error.message); return; }
     toast.success("Marked as paid. Player notified.");
@@ -105,7 +105,7 @@ function AdminDashboard() {
                     <p className="truncate text-[11px] text-muted-foreground">{p.tournament ?? "—"}</p>
                     <a href={`tel:${p.phone}`} className="mt-1 inline-block font-mono text-sm text-primary">{p.phone}</a>
                   </div>
-                  {p.status === "paid" ? (
+                  {p.status === "sent" ? (
                     <span className="inline-flex items-center gap-1 text-xs text-success"><CheckCircle2 className="h-4 w-4" /> Paid</span>
                   ) : (
                     <Button onClick={() => markPaid(p.id)} size="sm" className="h-9">Mark Paid</Button>
