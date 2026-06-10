@@ -59,6 +59,30 @@ export type Database = {
           },
         ]
       }
+      league_seasons: {
+        Row: {
+          created_at: string
+          division: number
+          id: string
+          status: string
+          week_start: string
+        }
+        Insert: {
+          created_at?: string
+          division: number
+          id?: string
+          status?: string
+          week_start: string
+        }
+        Update: {
+          created_at?: string
+          division?: number
+          id?: string
+          status?: string
+          week_start?: string
+        }
+        Relationships: []
+      }
       match_results: {
         Row: {
           ai_extracted: Json | null
@@ -473,6 +497,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      count_entries: { Args: { _tid: string }; Returns: number }
       get_match_room_info: { Args: { _match_id: string }; Returns: string }
       has_role: {
         Args: {
