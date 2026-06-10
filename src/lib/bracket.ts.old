@@ -1,0 +1,320 @@
+/**
+ * Tournament Bracket Generation and Match Scheduling
+ * Handles bracket generation, time slot assignment, and notifications
+ */
+
+import { supabase } from "@/integrations/supabase/client";
+import { sendLocalNotification } from "@/lib/notifications";
+
+export interface TimeSlot {
+  day: "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
+  period: "morning" | "afternoon" | "evening";
+  startTime: string;
+  endTime: string;
+}
+
+// Available match time slots (2-hour windows)
+export const AVAILABLE_TIME_SLOTS: TimeSlot[] = [
+  { day: "mon", period: "morning", startTime: "08:00", endTime: "10:00" },
+  { day: "mon", period: "morning", startTime: "10:00", endTime: "12:00" },
+  { day: "mon", period: "afternoon", startTime: "12:00", endTime: "14:00" },
+  { day: "mon", period: "afternoon", startTime: "14:00", endTime: "16:00" },
+  { day: "mon", period: "afternoon", startTime: "16:00", endTime: "18:00" },
+  { day: "mon", period: "evening", startTime: "18:00", endTime: "20:00" },
+  { day: "mon", period: "evening", startTime: "20:00", endTime: "22:00" },
+
+  { day: "tue", period: "morning", startTime: "08:00", endTime: "10:00" },
+  { day: "tue", period: "morning", startTime: "10:00", endTime: "12:00" },
+  { day: "tue", period: "afternoon", startTime: "12:00", endTime: "14:00" },
+  { day: "tue", period: "afternoon", startTime: "14:00", endTime: "16:00" },
+  { day: "tue", period: "afternoon", startTime: "16:00", endTime: "18:00" },
+  { day: "tue", period: "evening", startTime: "18:00", endTime: "20:00" },
+  { day: "tue", period: "evening", startTime: "20:00", endTime: "22:00" },
+
+  // ... repeat for wed, thu, fri, sat, sun
+  { day: "wed", period: "morning", startTime: "08:00", endTime: "10:00" },
+  { day: "wed", period: "morning", startTime: "10:00", endTime: "12:00" },
+  { day: "wed", period: "afternoon", startTime: "12:00", endTime: "14:00" },
+  { day: "wed", period: "afternoon", startTime: "14:00", endTime: "16:00" },
+  { day: "wed", period: "afternoon", startTime: "16:00", endTime: "18:00" },
+  { day: "wed", period: "evening", startTime: "18:00", endTime: "20:00" },
+  { day: "wed", period: "evening", startTime: "20:00", endTime: "22:00" },
+
+  { day: "thu", period: "morning", startTime: "08:00", endTime: "10:00" },
+  { day: "thu", period: "morning", startTime: "10:00", endTime: "12:00" },
+  { day: "thu", period: "afternoon", startTime: "12:00", endTime: "14:00" },
+  { day: "thu", period: "afternoon", startTime: "14:00", endTime: "16:00" },
+  { day: "thu", period: "afternoon", startTime: "16:00", endTime: "18:00" },
+  { day: "thu", period: "evening", startTime: "18:00", endTime: "20:00" },
+  { day: "thu", period: "evening", startTime: "20:00", endTime: "22:00" },
+
+  { day: "fri", period: "morning", startTime: "08:00", endTime: "10:00" },
+  { day: "fri", period: "morning", startTime: "10:00", endTime: "12:00" },
+  { day: "fri", period: "afternoon", startTime: "12:00", endTime: "14:00" },
+  { day: "fri", period: "afternoon", startTime: "14:00", endTime: "16:00" },
+  { day: "fri", period: "afternoon", startTime: "16:00", endTime: "18:00" },
+  { day: "fri", period: "evening", startTime: "18:00", endTime: "20:00" },
+  { day: "fri", period: "evening", startTime: "20:00", endTime: "22:00" },
+
+  { day: "sat", period: "morning", startTime: "08:00", endTime: "10:00" },
+  { day: "sat", period: "morning", startTime: "10:00", endTime: "12:00" },
+  { day: "sat", period: "afternoon", startTime: "12:00", endTime: "14:00" },
+  { day: "sat", period: "afternoon", startTime: "14:00", endTime: "16:00" },
+  { day: "sat", period: "afternoon", startTime: "16:00", endTime: "18:00" },
+  { day: "sat", period: "evening", startTime: "18:00", endTime: "20:00" },
+  { day: "sat", period: "evening", startTime: "20:00", endTime: "22:00" },
+
+  { day: "sun", period: "morning", startTime: "08:00", endTime: "10:00" },
+  { day: "sun", period: "morning", startTime: "10:00", endTime: "12:00" },
+  { day: "sun", period: "afternoon", startTime: "12:00", endTime: "14:00" },
+  { day: "sun", period: "afternoon", startTime: "14:00", endTime: "16:00" },
+  { day: "sun", period: "afternoon", startTime: "16:00", endTime: "18:00" },
+  { day: "sun", period: "evening", startTime: "18:00", endTime: "20:00" },
+  { day: "sun", period: "evening", startTime: "20:00", endTime: "22:00" },
+];
+
+/**
+ * Generate single elimination bracket
+ */
+export function generateSingleElimBracket(
+  playerIds: string[]
+): Array<{
+  round: number;
+  player1_id: string | null;
+  player2_id: string | null;
+}> {
+  const matches: Array<{
+    round: number;
+    player1_id: string | null;
+    player2_id: string | null;
+  }> = [];
+
+  // Shuffle players
+  const shuffled = [...playerIds].sort(() => Math.random() - 0.5);
+
+  let round = 1;
+  let currentRound = shuffled;
+
+  while (currentRound.length > 1) {
+    for (let i = 0; i < currentRound.length; i += 2) {
+      const p1 = currentRound[i] || null;
+      const p2 = currentRound[i + 1] || null;
+
+      matches.push({
+        round,
+        player1_id: p1,
+        player2_id: p2,
+      });
+    }
+
+    // Prepare for next round (winners advance)
+    currentRound = new Array(Math.ceil(currentRound.length / 2)).fill(null);
+    round++;
+  }
+
+  return matches;
+}
+
+/**
+ * Generate group stage bracket (6 players per group, round robin)
+ */
+export function generateGroupStageBracket(
+  playerIds: string[],
+  groupSize: number = 6
+): Array<{
+  round: number;
+  group: number;
+  player1_id: string;
+  player2_id: string;
+}> {
+  const matches: Array<{
+    round: number;
+    group: number;
+    player1_id: string;
+    player2_id: string;
+  }> = [];
+
+  // Divide into groups
+  const numGroups = Math.ceil(playerIds.length / groupSize);
+  const groups: string[][] = [];
+
+  for (let i = 0; i < numGroups; i++) {
+    groups.push(playerIds.slice(i * groupSize, (i + 1) * groupSize));
+  }
+
+  // Generate round robin within each group
+  groups.forEach((group, groupIndex) => {
+    for (let i = 0; i < group.length; i++) {
+      for (let j = i + 1; j < group.length; j++) {
+        matches.push({
+          round: Math.max(i, j),
+          group: groupIndex,
+          player1_id: group[i],
+          player2_id: group[j],
+        });
+      }
+    }
+  });
+
+  return matches;
+}
+
+/**
+ * Assign time slots to matches based on player availability
+ */
+export async function assignTimeSlots(
+  tournamentId: string,
+  matchIds: string[]
+): Promise<{
+  success: boolean;
+  assigned: number;
+  failed: string[];
+}> {
+  const failed: string[] = [];
+  let assigned = 0;
+
+  try {
+    // Fetch all availability preferences
+    const { data: availabilities } = await supabase
+      .from("player_availability")
+      .select("*")
+      .eq("tournament_id", tournamentId);
+
+    if (!availabilities) return { success: false, assigned: 0, failed: matchIds };
+
+    // For each match, assign a time slot
+    const { data: matches } = await supabase
+      .from("matches")
+      .select("*")
+      .in("id", matchIds);
+
+    if (!matches) return { success: false, assigned: 0, failed: matchIds };
+
+    for (const match of matches) {
+      const p1Avail = availabilities.find((a) => a.user_id === match.player1_id);
+      const p2Avail = availabilities.find((a) => a.user_id === match.player2_id);
+
+      // Find a common available slot
+      let selectedSlot: TimeSlot | null = null;
+
+      for (const slot of AVAILABLE_TIME_SLOTS) {
+        let p1Available = false;
+        let p2Available = false;
+
+        // Check if slot matches player 1's availability
+        if (slot.day === "mon" || slot.day === "tue" || slot.day === "wed" || slot.day === "thu" || slot.day === "fri") {
+          if (slot.period === "morning") p1Available = p1Avail?.weekday_morning || false;
+          else if (slot.period === "afternoon") p1Available = p1Avail?.weekday_afternoon || false;
+          else if (slot.period === "evening") p1Available = p1Avail?.weekday_evening || false;
+        } else {
+          if (slot.period === "morning") p1Available = p1Avail?.weekend_morning || false;
+          else if (slot.period === "afternoon") p1Available = p1Avail?.weekend_afternoon || false;
+          else if (slot.period === "evening") p1Available = p1Avail?.weekend_evening || false;
+        }
+
+        // Check if slot matches player 2's availability
+        if (slot.day === "mon" || slot.day === "tue" || slot.day === "wed" || slot.day === "thu" || slot.day === "fri") {
+          if (slot.period === "morning") p2Available = p2Avail?.weekday_morning || false;
+          else if (slot.period === "afternoon") p2Available = p2Avail?.weekday_afternoon || false;
+          else if (slot.period === "evening") p2Available = p2Avail?.weekday_evening || false;
+        } else {
+          if (slot.period === "morning") p2Available = p2Avail?.weekend_morning || false;
+          else if (slot.period === "afternoon") p2Available = p2Avail?.weekend_afternoon || false;
+          else if (slot.period === "evening") p2Available = p2Avail?.weekend_evening || false;
+        }
+
+        // If both available, select this slot
+        if (p1Available && p2Available) {
+          selectedSlot = slot;
+          break;
+        }
+      }
+
+      // If no common slot found, default to evening (most universal)
+      if (!selectedSlot) {
+        selectedSlot = AVAILABLE_TIME_SLOTS.find((s) => s.period === "evening") || AVAILABLE_TIME_SLOTS[0];
+      }
+
+      // Update match with slot assignment
+      const { error } = await supabase
+        .from("matches")
+        .update({
+          time_slot_start: selectedSlot.startTime,
+          time_slot_end: selectedSlot.endTime,
+          assigned_at: new Date().toISOString(),
+        })
+        .eq("id", match.id);
+
+      if (error) {
+        failed.push(match.id);
+      } else {
+        assigned++;
+      }
+    }
+
+    return { success: true, assigned, failed };
+  } catch (error) {
+    console.error("Failed to assign time slots:", error);
+    return { success: false, assigned, failed: matchIds };
+  }
+}
+
+/**
+ * Send match assignment notifications to all players in a bracket
+ */
+export async function notifyMatchAssignments(tournamentId: string): Promise<void> {
+  try {
+    // Fetch all matches for the tournament
+    const { data: matches } = await supabase
+      .from("matches")
+      .select("*")
+      .eq("tournament_id", tournamentId)
+      .not("player2_id", "is", null);
+
+    if (!matches) return;
+
+    // Fetch player profiles for contact info
+    const playerIds = new Set<string>();
+    matches.forEach((m) => {
+      playerIds.add(m.player1_id);
+      playerIds.add(m.player2_id);
+    });
+
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("id, username, phone")
+      .in("id", Array.from(playerIds));
+
+    const profileMap = new Map(profiles?.map((p) => [p.id, p]) || []);
+
+    // Send notifications to each player
+    for (const match of matches) {
+      const p1Profile = profileMap.get(match.player1_id);
+      const p2Profile = profileMap.get(match.player2_id);
+
+      if (!p1Profile || !p2Profile) continue;
+
+      const slotText = `${match.time_slot_start || "TBA"} - ${match.time_slot_end || "TBA"}`;
+
+      // Notify player 1
+      await sendLocalNotification({
+        title: "Match Scheduled",
+        body: `vs ${p2Profile.username} - ${slotText}\nPhone: ${p2Profile.phone}`,
+        icon: "/icon-192.png",
+        link: `/matches/${match.id}`,
+        data: { matchId: match.id, opponent: p2Profile.username },
+      });
+
+      // Notify player 2
+      await sendLocalNotification({
+        title: "Match Scheduled",
+        body: `vs ${p1Profile.username} - ${slotText}\nPhone: ${p1Profile.phone}`,
+        icon: "/icon-192.png",
+        link: `/matches/${match.id}`,
+        data: { matchId: match.id, opponent: p1Profile.username },
+      });
+    }
+  } catch (error) {
+    console.error("Failed to notify match assignments:", error);
+  }
+}

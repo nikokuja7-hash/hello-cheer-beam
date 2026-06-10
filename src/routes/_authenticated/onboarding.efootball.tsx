@@ -15,6 +15,7 @@ function EfootballVerify() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
+  const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(false);
 
   function pickFile(f: File) {
@@ -29,96 +30,166 @@ function EfootballVerify() {
       toast.error("Upload your eFootball profile screenshot first.");
       return;
     }
+    if (!displayName.trim()) {
+      toast.error("Enter your current eFootball match display name.");
+      return;
+    }
+
     setLoading(true);
     try {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) throw new Error("Not signed in");
 
-      // Mark profile verified — AI extraction stub for V1.
-      // Real AI Gemini Vision pass runs server-side once storage is wired.
-      const { error } = await supabase.from("profiles").update({
-        is_verified: true,
-        onboarding_complete: true,
-        konami_id: "pending_ai_extract",
-        efootball_name: "pending_ai_extract",
-      }).eq("id", u.user.id);
-      if (error) throw error;
+      // Read file as base64 data URL for Gemini
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const imageDataUrl = reader.result as string;
 
-      toast.success("Verified. Welcome to Nexarena.");
-      navigate({ to: "/home" });
+          // Call Gemini verification function
+          const { data: session } = await supabase.auth.getSession();
+          const verifyRes = await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/verify-efootball-screenshot`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${session.session?.access_token}`,
+              },
+              body: JSON.stringify({
+                image_url: imageDataUrl,
+                declared_display_name: displayName.trim(),
+              }),
+            }
+          );
+
+          const verifyData = await verifyRes.json();
+
+          if (!verifyRes.ok) {
+            throw new Error(verifyData.error || "Verification failed");
+          }
+
+          toast.success("eFootball verified! Welcome to Nexarena.");
+          
+          // Redirect to home after brief delay
+          setTimeout(() => {
+            navigate({ to: "/home" });
+          }, 500);
+        } catch (err: any) {
+          toast.error(err.message ?? "Verification failed");
+          setLoading(false);
+        }
+      };
+      reader.readAsDataURL(file);
     } catch (err: any) {
       toast.error(err.message ?? "Verification failed");
-    } finally {
       setLoading(false);
     }
-  }
-
-  async function skip() {
-    const { data: u } = await supabase.auth.getUser();
-    if (u.user) {
-      await supabase.from("profiles").update({ onboarding_complete: true }).eq("id", u.user.id);
-    }
-    navigate({ to: "/home" });
   }
 
   return (
     <div className="min-h-dvh bg-background text-foreground">
       <div className="mx-auto max-w-md px-5 py-10">
         <div className="text-center">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-primary">Step 3 of 3</p>
-          <h1 className="mt-3 font-display text-4xl tracking-wide">Link eFootball.</h1>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-primary">
+            Verify eFootball
+          </p>
+          <h1 className="mt-3 font-display text-4xl tracking-wide">One last step.</h1>
           <p className="mt-3 text-sm text-muted-foreground">
-            Upload a screenshot of your eFootball profile. Our AI reads your Konami ID so we
-            know it's really you in every match.
+            Upload your eFootball profile screenshot so we can verify your Konami ID.
+            This ensures you are who you say you are before you enter any tournament.
           </p>
         </div>
 
-        <div className="mt-8">
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => { const f = e.target.files?.[0]; if (f) pickFile(f); }}
-          />
+        <div className="mt-8 space-y-6">
+          {/* Screenshot upload */}
+          <div>
+            <label className="block text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">
+              Profile Screenshot
+            </label>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) pickFile(f);
+              }}
+            />
 
-          {preview ? (
-            <div className="relative">
-              <img src={preview} alt="eFootball profile" className="w-full rounded-lg border border-border" />
+            {preview ? (
+              <div className="relative">
+                <img
+                  src={preview}
+                  alt="eFootball profile"
+                  className="w-full rounded-lg border border-border"
+                />
+                <button
+                  onClick={() => fileRef.current?.click()}
+                  className="absolute bottom-3 right-3 rounded-md bg-background/90 px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest backdrop-blur-md hover:bg-background"
+                >
+                  Replace
+                </button>
+              </div>
+            ) : (
               <button
                 onClick={() => fileRef.current?.click()}
-                className="absolute bottom-3 right-3 rounded-md bg-background/90 px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest backdrop-blur-md"
+                className="no-tap flex aspect-[3/4] w-full flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed border-border bg-card transition hover:border-primary/40"
               >
-                Replace
+                <Upload className="h-8 w-8 text-muted-foreground" />
+                <div className="text-center text-[11px] text-muted-foreground">
+                  <p className="font-semibold">Tap to upload</p>
+                  <p>Profile screenshot</p>
+                </div>
               </button>
-            </div>
-          ) : (
-            <button
-              onClick={() => fileRef.current?.click()}
-              className="no-tap flex aspect-[3/4] w-full flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed border-border bg-card transition hover:border-primary/40"
-            >
-              <Upload className="h-8 w-8 text-muted-foreground" />
-              <span className="font-display text-lg tracking-wider">Upload screenshot</span>
-              <span className="text-[11px] text-muted-foreground">JPG or PNG · max 5MB</span>
-            </button>
-          )}
-        </div>
+            )}
+            <p className="mt-2 text-[10px] text-muted-foreground">
+              Screenshot must show your Konami ID clearly.
+            </p>
+          </div>
 
-        <div className="mt-6 rounded-lg border border-border bg-card/60 p-4">
-          <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">What we check</p>
-          <ul className="mt-2 space-y-1.5 text-xs">
-            <li className="flex gap-2"><Check className="h-3.5 w-3.5 text-primary mt-0.5" /> Konami ID</li>
-            <li className="flex gap-2"><Check className="h-3.5 w-3.5 text-primary mt-0.5" /> In-game display name</li>
-            <li className="flex gap-2"><Check className="h-3.5 w-3.5 text-primary mt-0.5" /> Club & rank (if visible)</li>
-          </ul>
-        </div>
+          {/* Display name input */}
+          <div>
+            <label className="block text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">
+              Match Display Name
+            </label>
+            <input
+              type="text"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder="Name that appears during matches"
+              maxLength={30}
+              className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground placeholder-muted-foreground"
+            />
+            <p className="mt-1 text-[10px] text-muted-foreground">
+              This is the name opponents see during eFootball matches. You can change it anytime in eFootball.
+            </p>
+          </div>
 
-        <Button onClick={submit} disabled={loading || !file} className="crimson-glow mt-6 h-14 w-full font-display text-lg tracking-wider">
-          {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Verify & finish"}
-        </Button>
-        <Button onClick={skip} variant="ghost" className="mt-2 h-10 w-full text-xs uppercase tracking-widest text-muted-foreground">
-          Skip for now (friendly matches only)
-        </Button>
+          {/* Submit button */}
+          <Button
+            onClick={submit}
+            disabled={loading || !file || !displayName.trim()}
+            className="crimson-glow h-12 w-full font-display tracking-wider"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Verifying...
+              </>
+            ) : (
+              <>
+                <Check className="mr-2 h-4 w-4" />
+                Verify & Continue
+              </>
+            )}
+          </Button>
+
+          <p className="text-center text-[10px] text-muted-foreground">
+            This uses AI to read your profile screenshot. Takes 5-10 seconds.
+          </p>
+        </div>
       </div>
     </div>
   );
