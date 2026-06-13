@@ -24,7 +24,7 @@ interface FlaggedMatch {
   player2_score: number;
   dispute_reason?: string;
   screenshot_url?: string;
-  status: "flagged" | "reviewed" | "approved" | "overridden";
+  status: "scheduled" | "checked_in" | "active" | "submitted" | "verified" | "disputed" | "closed" | "forfeit";
   created_at: string;
 }
 
@@ -52,23 +52,21 @@ function FlaggedMatches() {
           player2_id,
           player1_score,
           player2_score,
-          dispute_reason,
-          screenshot_url,
           status,
           created_at,
-          profiles:player1_id(username),
-          profiles_2:player2_id(username)
+          player1:player1_id(username),
+          player2:player2_id(username)
         `
         )
-        .eq("status", "flagged")
+        .eq("status", "disputed")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
 
       const flagged = data?.map((m: any) => ({
         ...m,
-        player1_name: m.profiles?.username || "Unknown",
-        player2_name: m.profiles_2?.username || "Unknown",
+        player1_name: m.player1?.username || "Unknown",
+        player2_name: m.player2?.username || "Unknown",
       })) || [];
 
       setMatches(flagged);
@@ -92,21 +90,17 @@ function FlaggedMatches() {
 
     setProcessing(true);
     try {
-      let newStatus = "reviewed";
+      let newStatus = "verified" as const;
       let winner_id = null;
 
       if (action === "approve") {
-        newStatus = "verified";
-        // Determine winner based on score
         if (selectedMatch.player1_score > selectedMatch.player2_score) {
           winner_id = selectedMatch.player1_id;
         } else if (selectedMatch.player2_score > selectedMatch.player1_score) {
           winner_id = selectedMatch.player2_id;
         }
-        // If equal, use performance score (would be stored already)
       } else if (action === "override") {
-        newStatus = "overridden";
-        // Admin can override winner - for now approve the match
+        newStatus = "closed";
         if (selectedMatch.player1_score > selectedMatch.player2_score) {
           winner_id = selectedMatch.player1_id;
         } else {
@@ -116,18 +110,13 @@ function FlaggedMatches() {
 
       const { error } = await supabase
         .from("matches")
-        .update({
-          status: newStatus,
-          winner_id,
-          admin_note: overrideNote,
-        })
+        .update({ status: newStatus, winner_id })
         .eq("id", selectedMatch.id);
 
       if (error) throw error;
 
       toast.success(`Match ${action === "approve" ? "approved" : "overridden"}`);
       setShowDialog(false);
-      setOverrideNote("");
       loadFlaggedMatches();
     } catch (error) {
       console.error("Failed to process match:", error);

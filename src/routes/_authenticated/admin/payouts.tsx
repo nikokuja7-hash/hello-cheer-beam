@@ -18,12 +18,12 @@ interface Payout {
   id: string;
   user_id: string;
   username?: string;
-  amount: number;
-  phone_number?: string;
+  amount_kes: number;
+  phone?: string;
   tournament_name?: string;
-  status: "pending" | "paid" | "failed";
+  status: "pending" | "sent" | "failed";
   created_at: string;
-  paid_at?: string;
+  marked_paid_at?: string | null;
 }
 
 function PayoutsAdmin() {
@@ -47,11 +47,11 @@ function PayoutsAdmin() {
           `
           id,
           user_id,
-          amount,
-          phone_number,
+          amount_kes,
+          phone,
           status,
           created_at,
-          paid_at,
+          marked_paid_at,
           profiles:user_id(username),
           tournaments:tournament_id(name)
         `
@@ -70,8 +70,8 @@ function PayoutsAdmin() {
 
       // Calculate stats
       const pending = parsed.filter((p: any) => p.status === "pending").length;
-      const paid = parsed.filter((p: any) => p.status === "paid").length;
-      const totalAmount = parsed.reduce((sum: number, p: any) => sum + p.amount, 0);
+      const paid = parsed.filter((p: any) => p.status === "sent").length;
+      const totalAmount = parsed.reduce((sum: number, p: any) => sum + p.amount_kes, 0);
 
       setStats({ pending, paid, total: totalAmount });
     } catch (error) {
@@ -94,22 +94,17 @@ function PayoutsAdmin() {
     try {
       const { error } = await supabase
         .from("payouts")
-        .update({ status: "paid", paid_at: new Date().toISOString() })
+        .update({ status: "sent", marked_paid_at: new Date().toISOString() })
         .eq("id", selectedPayout.id);
 
       if (error) throw error;
 
       // Send notification to user
-      await supabase.functions.invoke("send-push-notification", {
-        body: JSON.stringify({
-          user_id: selectedPayout.user_id,
-          type: "prize_distributed",
-          title: "Prize Paid! 🎉",
-          body: `Your prize of KES ${selectedPayout.amount.toLocaleString()} has been sent to ${selectedPayout.phone_number}`,
-          data: {
-            payout_id: selectedPayout.id,
-          },
-        }),
+      await supabase.from("notifications").insert({
+        user_id: selectedPayout.user_id,
+        title: "Prize Paid!",
+        body: `Your prize of KES ${selectedPayout.amount_kes.toLocaleString()} has been sent to your M-Pesa`,
+        link: "/profile",
       });
 
       toast.success("Payout marked as paid");
@@ -229,20 +224,20 @@ function PayoutsAdmin() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Mark Payout as Paid</AlertDialogTitle>
-            <AlertDialogDescription>
+          <AlertDialogDescription>
               {selectedPayout && (
                 <div className="space-y-2">
                   <p>
                     <strong>{selectedPayout.username}</strong>
                   </p>
-                  <p>Amount: KES {selectedPayout.amount.toLocaleString()}</p>
-                  <p>Phone: {selectedPayout.phone_number}</p>
+                  <p>Amount: KES {selectedPayout.amount_kes.toLocaleString()}</p>
+                  <p>Phone: {selectedPayout.phone}</p>
                   <p className="text-[10px] text-yellow-600 pt-2">
                     Confirm M-Pesa transfer before marking as paid.
                   </p>
                 </div>
               )}
-            </AlertDialogDescription>
+          </AlertDialogDescription>
           </AlertDialogHeader>
 
           <div className="flex gap-2">
