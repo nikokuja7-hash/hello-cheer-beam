@@ -17,9 +17,9 @@ export const Route = createFileRoute("/_authenticated/admin/users")({
 interface User {
   id: string;
   username: string;
-  division: number;
-  warning_strikes: number;
-  is_verified: boolean;
+  division: number | null;
+  warning_strikes: number | null;
+  is_verified: boolean | null;
   created_at: string;
 }
 
@@ -32,12 +32,8 @@ function UserManagement() {
   useEffect(() => { loadUsers(); }, []);
 
   useEffect(() => {
-    if (searchQuery.trim() === "") {
-      setFilteredUsers(users);
-    } else {
-      const query = searchQuery.toLowerCase();
-      setFilteredUsers(users.filter((u) => u.username.toLowerCase().includes(query)));
-    }
+    if (searchQuery.trim() === "") setFilteredUsers(users);
+    else setFilteredUsers(users.filter((u) => u.username.toLowerCase().includes(searchQuery.toLowerCase())));
   }, [searchQuery, users]);
 
   async function loadUsers() {
@@ -46,22 +42,15 @@ function UserManagement() {
       if (error) throw error;
       setUsers(data || []);
       setFilteredUsers(data || []);
-    } catch (error) {
-      console.error("Failed to load users:", error);
-      toast.error("Failed to load users");
-    } finally {
-      setLoading(false);
-    }
+    } catch (error) { console.error("Failed to load users:", error); toast.error("Failed to load users"); }
+    finally { setLoading(false); }
   }
 
   async function warnUser(user: User) {
-    const newStrikes = Math.min(user.warning_strikes + 1, 3);
+    const newStrikes = Math.min((user.warning_strikes || 0) + 1, 3);
     const { error } = await supabase.from("profiles").update({ warning_strikes: newStrikes }).eq("id", user.id);
     if (error) return toast.error(error.message);
-    await supabase.from("notifications").insert({
-      user_id: user.id, title: newStrikes >= 3 ? "Account Suspended" : "Warning Strike",
-      body: newStrikes >= 3 ? "3 strikes — suspended." : `Strike ${newStrikes}/3`, link: "/profile",
-    });
+    await supabase.from("notifications").insert({ user_id: user.id, title: newStrikes >= 3 ? "Account Suspended" : "Warning Strike", body: newStrikes >= 3 ? "3 strikes — suspended." : `Strike ${newStrikes}/3`, link: "/profile" });
     toast.success(newStrikes >= 3 ? "User suspended (3 strikes)" : "Warning strike issued");
     loadUsers();
   }
@@ -73,32 +62,20 @@ function UserManagement() {
     loadUsers();
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-dvh bg-background pb-24">
-        <div className="mx-auto max-w-md px-5 py-10 text-center text-muted-foreground">Loading users...</div>
-        <BottomNav />
-      </div>
-    );
-  }
+  if (loading) return <div className="min-h-dvh bg-background pb-24"><div className="mx-auto max-w-md px-5 py-10 text-center text-muted-foreground">Loading users...</div><BottomNav /></div>;
 
   return (
     <div className="min-h-dvh bg-background pb-24">
       <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur-xl">
         <div className="mx-auto max-w-md px-5 py-4">
-          <h1 className="font-display text-xl tracking-wider flex items-center gap-2">
-            <Users className="h-5 w-5 text-primary" /> User Management
-          </h1>
+          <h1 className="font-display text-xl tracking-wider flex items-center gap-2"><Users className="h-5 w-5 text-primary" /> User Management</h1>
         </div>
       </header>
-
       <main className="mx-auto max-w-md px-5 py-6 space-y-4">
         <Input placeholder="Search by username..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="text-[11px]" />
         <div className="space-y-2">
           <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Total: {filteredUsers.length}</p>
-          {filteredUsers.length === 0 ? (
-            <p className="text-center text-[11px] text-muted-foreground py-8">No users found.</p>
-          ) : (
+          {filteredUsers.length === 0 ? <p className="text-center text-[11px] text-muted-foreground py-8">No users found.</p> : (
             <div className="space-y-2">
               {filteredUsers.map((user) => (
                 <div key={user.id} className="rounded-lg border border-border bg-card p-3">
@@ -106,20 +83,16 @@ function UserManagement() {
                     <div className="flex-1">
                       <p className="font-semibold text-[11px]">{user.username}</p>
                       <div className="mt-2 flex gap-1 flex-wrap">
-                        <Badge variant="outline" className="text-[9px]">D{user.division}</Badge>
-                        {user.warning_strikes > 0 && <Badge variant="destructive" className="text-[9px]">⚠️ {user.warning_strikes}/3</Badge>}
+                        <Badge variant="outline" className="text-[9px]">D{user.division ?? 3}</Badge>
+                        {!!user.warning_strikes && <Badge variant="destructive" className="text-[9px]">⚠️ {user.warning_strikes}/3</Badge>}
                         {!user.is_verified && <Badge variant="secondary" className="text-[9px]">Unverified</Badge>}
                       </div>
                     </div>
                   </div>
                   <div className="mt-3 grid grid-cols-2 gap-1">
-                    <Button onClick={() => warnUser(user)} size="sm" variant="outline" className="h-6 text-[9px]">
-                      <AlertTriangle className="h-3 w-3 mr-1" /> Warn
-                    </Button>
-                    {user.warning_strikes > 0 && (
-                      <Button onClick={() => resetStrikes(user)} size="sm" variant="outline" className="h-6 text-[9px] col-span-2">
-                        <RotateCcw className="h-3 w-3 mr-1" /> Reset Strikes
-                      </Button>
+                    <Button onClick={() => warnUser(user)} size="sm" variant="outline" className="h-6 text-[9px]"><AlertTriangle className="h-3 w-3 mr-1" /> Warn</Button>
+                    {!!user.warning_strikes && (
+                      <Button onClick={() => resetStrikes(user)} size="sm" variant="outline" className="h-6 text-[9px] col-span-2"><RotateCcw className="h-3 w-3 mr-1" /> Reset Strikes</Button>
                     )}
                   </div>
                 </div>
