@@ -1,18 +1,14 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { BottomNav } from "@/components/bottom-nav";
 import { Button } from "@/components/ui/button";
-import { Trophy, Users, Clock, ArrowLeft, MessageCircle, Eye, PlayCircle, Share2, AlertTriangle } from "lucide-react";
+import { Trophy, Users, Clock, ArrowLeft, MessageCircle, Eye, PlayCircle, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { Countdown } from "@/components/countdown";
 import { TournamentChat } from "@/components/tournament/tournament-chat";
 import { PreviewBracket } from "@/components/tournament/preview-bracket";
-import { BracketPreview } from "@/components/bracket-preview";
 import { useAuth } from "@/hooks/use-auth";
-import { generateTournamentBracket, determineTournamentFormat } from "@/lib/bracket";
-import { TournamentTransparency } from "@/components/tournament-transparency";
-import { getTournamentTransparencyData } from "@/lib/tournament-transparency";
 
 export const Route = createFileRoute("/_authenticated/tournaments/$id")({
   ssr: false,
@@ -22,64 +18,26 @@ export const Route = createFileRoute("/_authenticated/tournaments/$id")({
 
 type Tab = "overview" | "bracket" | "chat";
 
-interface TournamentData {
-  id: string;
-  name: string;
-  kind: string;
-  status: string;
-  entry_fee_kes: number;
-  max_players: number;
-  min_players: number;
-  format: "single_elim" | "group_stage";
-  match_window_hours: number;
-  registration_closes_at: string;
-  starts_at: string;
-  created_by: string;
-  bracket_generated_at?: string;
-}
-
 function TDetail() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [t, setT] = useState<TournamentData | null>(null);
+  const [t, setT] = useState<any>(null);
   const [count, setCount] = useState(0);
   const [joined, setJoined] = useState(false);
   const [tab, setTab] = useState<Tab>("overview");
-  const [showAvailabilityFlow, setShowAvailabilityFlow] = useState(false);
-  const [userAvailability, setUserAvailability] = useState<boolean | null>(null);
-  const [bracketGenerated, setBracketGenerated] = useState(false);
-  const [generating, setGenerating] = useState(false);
-  const [transparencyData, setTransparencyData] = useState<any>(null);
-  
-  const isCreator = useMemo(() => t && user && t.created_by === user.id, [t, user]);
+  const isCreator = t && user && t.creator_id === user.id;
 
   async function load() {
     const { data } = await supabase.from("tournaments").select("*").eq("id", id).maybeSingle();
     setT(data);
-    setBracketGenerated(!!data?.bracket_generated_at);
-    
     const { count: c } = await supabase.from("tournament_entries").select("id", { count: "exact", head: true }).eq("tournament_id", id);
     setCount(c ?? 0);
-    
     if (user) {
       const { data: e } = await supabase.from("tournament_entries").select("id").eq("tournament_id", id).eq("user_id", user.id).maybeSingle();
       setJoined(!!e);
-      
-      // Check if user has set availability
-      if (e) {
-        const { data: avail } = await supabase.from("player_availability").select("id").eq("tournament_id", id).eq("user_id", user.id).maybeSingle();
-        setUserAvailability(!!avail);
-      }
-    }
-
-    // Load transparency data if bracket is generated
-    if (data?.bracket_generated_at) {
-      const transparencyInfo = await getTournamentTransparencyData(id);
-      setTransparencyData(transparencyInfo);
     }
   }
-  
   useEffect(() => { load(); }, [id, user?.id]);
 
   useEffect(() => {
@@ -94,9 +52,6 @@ function TDetail() {
 
   const pool = t.entry_fee_kes * count;
   const prize = Math.floor(pool * 0.85);
-
-  // Show availability setup for active tournaments that need it
-  const shouldShowAvailability = t.status === "active" && joined && !userAvailability && !bracketGenerated;
 
   async function join() {
     if (!user) return;
@@ -128,67 +83,6 @@ function TDetail() {
     load();
   }
 
-  async function generateBracket() {
-    setGenerating(true);
-    try {
-      // Get all players in the tournament
-      const { data: entries } = await supabase
-        .from("tournament_entries")
-        .select("user_id")
-        .eq("tournament_id", id);
-
-      if (!entries || entries.length === 0) {
-        toast.error("No players joined.");
-        return;
-      }
-
-      const playerIds = entries.map((e) => e.user_id);
-      
-      // Generate tournament bracket using new Format A/B system
-      const tournamentStart = t.starts_at ? new Date(t.starts_at) : new Date();
-      const bracket = generateTournamentBracket(playerIds, id, tournamentStart);
-      
-      // Combine all matches from all stages
-      const allMatches = [
-        ...(bracket.knockout_matches || []),
-        ...bracket.group_matches,
-        ...(bracket.semifinal_matches || []),
-        ...(bracket.final_match ? [bracket.final_match] : []),
-        ...(bracket.third_place_match ? [bracket.third_place_match] : []),
-      ];
-
-      // Insert all matches into database
-      for (const match of allMatches) {
-        await supabase.from("matches").insert({
-          tournament_id: match.tournament_id,
-          player1_id: match.player1_id,
-          player2_id: match.player2_id,
-          status: match.status,
-          stage: match.stage,
-          group_id: match.group_id,
-          match_date: match.match_date,
-          time_slot_start: match.time_slot_start,
-          time_slot_end: match.time_slot_end,
-        });
-      }
-
-      // Store bracket metadata
-      await supabase.from("tournaments").update({
-        bracket_generated_at: new Date().toISOString(),
-        bracket_format: bracket.format,
-        total_matches: allMatches.length,
-      }).eq("id", id);
-
-      toast.success(`Bracket generated (${bracket.format === "A" ? "Group Stage" : "Knockout + Group"} • ${allMatches.length} matches)`);
-      load();
-    } catch (error) {
-      console.error("Failed to generate bracket:", error);
-      toast.error("Failed to generate bracket");
-    } finally {
-      setGenerating(false);
-    }
-  }
-
   async function share() {
     const url = `${window.location.origin}/tournaments/${id}`;
     try {
@@ -208,23 +102,6 @@ function TDetail() {
       </header>
 
       <main className="mx-auto max-w-md space-y-5 px-5 py-5">
-        {shouldShowAvailability && (
-          <div className="rounded-lg border border-yellow-500/40 bg-yellow-500/5 p-4">
-            <p className="flex items-center gap-2 text-[11px] font-semibold text-yellow-600 mb-2">
-              <AlertTriangle className="h-4 w-4" />
-              Set Your Availability
-            </p>
-            <p className="text-[10px] text-muted-foreground mb-3">
-              Tell us when you're available for matches so we can schedule them at times that work for you.
-            </p>
-            <Button
-              onClick={() => navigate({ to: `/onboarding/availability?tournamentId=${id}` })}
-              className="w-full h-9 text-[10px]"
-            >
-              Set Availability
-            </Button>
-          </div>
-        )}
         <div>
           <p className="text-[10px] font-bold uppercase tracking-widest text-primary">{t.kind.replace("_", " ")}</p>
           <h1 className="mt-1 font-display text-3xl tracking-wide">{t.name}</h1>
@@ -235,14 +112,12 @@ function TDetail() {
           )}
         </div>
 
-        {/* Live prize pool */}
         <section className="rounded-xl border border-primary/40 bg-gradient-to-br from-primary/15 via-card to-card p-5">
           <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Live prize pool</p>
           <p className="mt-1 font-display text-5xl tracking-wide text-primary">KES {prize.toLocaleString()}</p>
           <p className="mt-1 text-[11px] text-muted-foreground">{count} of {t.max_players} players joined</p>
         </section>
 
-        {/* Tabs */}
         <div className="grid grid-cols-3 rounded-lg border border-border bg-card p-1">
           {(["overview", "bracket", "chat"] as Tab[]).map((k) => (
             <button key={k} onClick={() => setTab(k)}
@@ -283,47 +158,7 @@ function TDetail() {
           </>
         )}
 
-        {tab === "bracket" && (joined ? (
-          <div className="space-y-4">
-            {bracketGenerated ? (
-              <>
-                {transparencyData && (
-                  <TournamentTransparency
-                    stage={transparencyData.stage}
-                    dayNumber={transparencyData.dayNumber}
-                    totalDays={transparencyData.totalDays}
-                    matchesPending={transparencyData.matchesPending}
-                    matchesCompleted={transparencyData.matchesCompleted}
-                    nextStageDescription={transparencyData.nextStageDescription}
-                    timeRemaining={transparencyData.timeRemaining}
-                  />
-                )}
-                <BracketPreview tournamentId={id} tournamentType={t.format === "single_elim" ? "cup" : "league"} />
-              </>
-            ) : (
-              <>
-                <div className="rounded-lg border border-dashed border-border p-6 text-center space-y-3">
-                  <p className="text-[11px] text-muted-foreground">
-                    {count === 0
-                      ? "Waiting for players to join."
-                      : count < t.min_players
-                        ? `Need ${t.min_players - count} more player${t.min_players - count !== 1 ? "s" : ""}.`
-                        : "Ready to generate bracket."}
-                  </p>
-                  {isCreator && count >= t.min_players && (
-                    <Button
-                      onClick={generateBracket}
-                      disabled={generating}
-                      className="w-full h-10"
-                    >
-                      {generating ? "Generating..." : "Generate Bracket"}
-                    </Button>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
-        ) : (
+        {tab === "bracket" && (joined ? <PreviewBracket tournamentId={id} /> : (
           <div className="rounded-lg border border-dashed border-border p-8 text-center text-xs text-muted-foreground">
             <Eye className="mx-auto mb-2 h-5 w-5" /> Bracket preview is for joined players only.
           </div>
